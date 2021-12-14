@@ -1,5 +1,6 @@
 class AuthenticationController < ApplicationController
   before_action :authorize_request, except: [:login, :refresh]
+  wrap_parameters false  
 
   # POST /auth/login
   def login

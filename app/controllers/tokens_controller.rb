@@ -1,4 +1,5 @@
 class TokensController < ApplicationController
+  # before_action :authorize_request
   before_action :set_token, only: [:show, :update, :destroy]
 
   # GET /tokens
@@ -8,26 +9,12 @@ class TokensController < ApplicationController
     render json: @tokens
   end
 
-  # GET /tokens/1
-  def show
-    render json: @token
-  end
-
   # POST /tokens
   def create
     @token = Token.new(token_params)
 
     if @token.save
       render json: @token, status: :created, location: @token
-    else
-      render json: @token.errors, status: :unprocessable_entity
-    end
-  end
-
-  # PATCH/PUT /tokens/1
-  def update
-    if @token.update(token_params)
-      render json: @token
     else
       render json: @token.errors, status: :unprocessable_entity
     end

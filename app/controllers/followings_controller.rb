@@ -1,4 +1,5 @@
 class FollowingsController < ApplicationController
+  before_action :authorize_request
   before_action :set_following, only: [:show, :update, :destroy]
 
   # GET /followings
