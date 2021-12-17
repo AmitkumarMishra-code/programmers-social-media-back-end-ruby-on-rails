@@ -1,4 +1,4 @@
 class Following < ApplicationRecord
   belongs_to :user
-  belongs_to :following_friend, :class_name => "User
+  belongs_to :following_friend, :class_name => "User", optional: true
 end

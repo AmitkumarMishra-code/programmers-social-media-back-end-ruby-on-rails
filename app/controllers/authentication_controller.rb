@@ -9,7 +9,9 @@ class AuthenticationController < ApplicationController
       token = JsonWebToken.encode(user_id: @user.id)
       refresh_token = JsonWebToken.encode(user_id: @user.id, exp: 72.hours.from_now)
       @existing_token = Token.find_by_username(params[:username])
-      @existing_token.destroy
+      if(@existing_token)
+        @existing_token.destroy
+      end
       @new_token = Token.new({ username:@user.username, token: refresh_token })
       @new_token.save!
       render json: { access_Token: token, refresh_Token: refresh_token }, status: :ok
