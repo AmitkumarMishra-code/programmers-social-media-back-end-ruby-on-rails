@@ -5,7 +5,7 @@ class UsersController < ApplicationController
   before_action :set_following, only: :index
 
   def index
-    @users = User.all
+    @users = User.where.not(id: @current_user.id)
     @usersToFollow = @users.reject {|friend| @following.include?(friend.id)}
     @followersList = Array.new
     for user in @usersToFollow do
@@ -32,11 +32,11 @@ class UsersController < ApplicationController
   end
 
   def selfprofile
-    render json: @profile, status: :ok
+    render json: {message: @profile}, status: :ok
   end
 
   def friendprofile
-    render json: @profile, status: :ok
+    render json: {message: @profile}, status: :ok
   end
 
   private

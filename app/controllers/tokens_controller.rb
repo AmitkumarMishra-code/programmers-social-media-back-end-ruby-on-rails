@@ -35,4 +35,5 @@ class TokensController < ApplicationController
     def token_params
       params.require(:token).permit(:username, :token)
     end
+    
 end

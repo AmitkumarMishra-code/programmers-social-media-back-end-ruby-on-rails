@@ -1,5 +1,6 @@
 class AuthenticationController < ApplicationController
   before_action :authorize_request, except: [:login, :refresh]
+  before_action :set_user, only: :logout
   wrap_parameters false  
 
   # POST /auth/login
@@ -18,6 +19,14 @@ class AuthenticationController < ApplicationController
     else
       render json: { error: 'unauthorized' }, status: :unauthorized
     end
+  end
+
+  def logout
+    @existing_token = Token.find_by_username(@current_user.username)
+    if(@existing_token)
+      @existing_token.destroy
+    end
+    render json: {message: 'Logged Out Successfully'}, status: :ok
   end
 
   # POST /auth/refresh
@@ -42,4 +51,12 @@ class AuthenticationController < ApplicationController
   def refresh_params
     params.permit(:token)
   end
+
+  def set_user      
+    header = request.headers['Authorization']
+    header = header.split(' ').last if header
+    @user = JsonWebToken.decode({token: header})
+    @current_user = User.find(@user[:user_id])
+  end
+
 end

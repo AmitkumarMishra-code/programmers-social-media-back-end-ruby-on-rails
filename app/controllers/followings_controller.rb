@@ -1,8 +1,7 @@
 class FollowingsController < ApplicationController
   before_action :authorize_request
   before_action :set_following, only: [:show]
-  before_action :set_current_user, only: [:create, :destroy]
-  before_action :set_user, only: [:followers]
+  before_action :set_user
  
   # GET /followings/1
   def show
@@ -11,11 +10,15 @@ class FollowingsController < ApplicationController
 
   # POST /followings
   def create
-    @friend = User.find(params[:friend_id])
-    @following = @current_user.followings.build(:friend_id => params[:friend_id])
+    begin
+    @friend = User.find_by(username: params[:username])
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { errors: e.message }, status: :unauthorized
+    end
+    @following = @current_user.followings.build(:friend_id => @friend.id)
 
     if @following.save
-      render json: @following, status: :created, location: @following
+      render json: {message: 'User Followed'}, status: :ok, location: @following
     else
       render json: @following.errors, status: :unprocessable_entity
     end
@@ -23,31 +26,32 @@ class FollowingsController < ApplicationController
 
   # DELETE /followings/1
   def destroy
-    @following = @current_user.followings.find(params[:id])
+    begin
+      @friend = User.find_by(username: params[:username])
+      rescue ActiveRecord::RecordNotFound => e
+        render json: { errors: e.message }, status: :unauthorized
+      end
+    @following = @current_user.followings.find(@friend.id)
     @following.destroy
+    render json: {message: 'User Unfollowed'}, status: :ok
   end
 
   def followers
-    @followers = @user.followers.all
+    @followers = @current_user.followers.all
     render json: {followers: @followers.length()}, status: :ok
   end
 
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_following
-      @following = Following.where(user_id: params[:id])
+      @following = Following.where(user_id: @current_user.id)
     end
 
-    def set_current_user
-      @current_user = User.find(params[:user_id])
+    def set_user      
+      header = request.headers['Authorization']
+      header = header.split(' ').last if header
+      @user = JsonWebToken.decode({token: header})
+      @current_user = User.find(@user[:user_id])
     end
 
-    def set_user
-      @user = User.find(params[:id])
-    end
-
-    # Only allow a list of trusted parameters through.
-    def following_params
-      params.require(:following).permit(:user_id, :friend_id)
-    end
 end

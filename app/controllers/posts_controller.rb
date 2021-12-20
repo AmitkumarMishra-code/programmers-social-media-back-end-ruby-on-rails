@@ -13,7 +13,6 @@ class PostsController < ApplicationController
 
   def feed
     @posts = Post.where(author: @following).order(created_at: :desc).limit(20)
-    puts(@posts)
     @likesBySelf = Array.new
     @finalPosts = Array.new
     for post in @posts do
@@ -47,10 +46,10 @@ class PostsController < ApplicationController
 
   # POST /posts
   def create
-    @post = Post.new({author: @current_user, post: params[:post_body]})
+    @post = Post.new({author: @current_user, post: params[:post]})
 
     if @post.save
-      render json: @post, status: :created, location: @post
+      render json: @post, status: :ok, location: @post
     else
       render json: @post.errors, status: :unprocessable_entity
     end
