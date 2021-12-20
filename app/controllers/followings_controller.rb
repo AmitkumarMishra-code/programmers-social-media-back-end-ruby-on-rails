@@ -11,12 +11,8 @@ class FollowingsController < ApplicationController
 
   # POST /followings
   def create
-    puts(@current_user)
     @friend = User.find(params[:friend_id])
-    puts(@friend)
     @following = @current_user.followings.build(:friend_id => params[:friend_id])
-    puts("after following")
-    puts(@following)
 
     if @following.save
       render json: @following, status: :created, location: @following

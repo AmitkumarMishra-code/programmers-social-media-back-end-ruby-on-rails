@@ -12,9 +12,37 @@ class PostsController < ApplicationController
   end
 
   def feed
-    @posts = Post.where(author: @following).order(created_at: :desc).limit(10)
+    @posts = Post.where(author: @following).order(created_at: :desc).limit(20)
     puts(@posts)
-    render json: @posts, status: :ok
+    @likesBySelf = Array.new
+    @finalPosts = Array.new
+    for post in @posts do
+      author = User.find_by_id(post.author_id)
+      @likes = Like.find_by(post_id_id: post.id, user_id_id: @current_user.id)
+      @allLikes = Like.find_by(post_id_id: post.id)
+      new_post = {
+        post: post.post,
+        likes: @allLikes,
+        createdAt: post.created_at,
+        _id:post.id,
+        author: {
+          username: author.username,
+          name: author.name,
+          photoURL: author.photoURL
+        }
+      }
+      if new_post['likes'].nil?
+        new_post['likes'] = []
+      end
+      @finalPosts.push(new_post)
+      if @likes
+        @likesBySelf.push true
+      else
+        @likesBySelf.push false
+      end
+    end
+    
+    render json: { message: { posts: @finalPosts, likesMap: @likesBySelf } }, status: :ok
   end
 
   # POST /posts
@@ -47,9 +75,7 @@ class PostsController < ApplicationController
     end
 
     def set_following
-      puts(@current_user)
       @following = Following.where(user_id: @current_user).pluck(:friend_id)
-      puts(@following)
     end
 
 end

@@ -3,10 +3,12 @@ Rails.application.routes.draw do
   post 'auth/token', to: 'authentication#refresh'
   resources :followings
   get '/followers/:id', to: 'followings#followers'
-  resources :users, only: [:create]
+  resources :users, only: [:create, :index]
   get '/profile', to: 'users#selfprofile'
   get '/profile/:id', to: 'users#friendprofile'
   resources :likes, only: [:create, :destroy]
+  post '/like/:id', to: 'likes#create'
+  post '/unlike/:id', to: 'likes#destroy'
   resources :posts, only: [:index, :create, :destroy]
   get '/feed', to: 'posts#feed'
   resources :tokens

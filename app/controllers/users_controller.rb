@@ -1,7 +1,24 @@
 class UsersController < ApplicationController
   before_action :authorize_request, except: :create
   before_action :find_friend, only: [:friendprofile]
-  before_action :set_user, only: [:selfprofile, :friendprofile]
+  before_action :set_user, only: [:selfprofile, :friendprofile, :index]
+  before_action :set_following, only: :index
+
+  def index
+    @users = User.all
+    @usersToFollow = @users.reject {|friend| @following.include?(friend.id)}
+    @followersList = Array.new
+    for user in @usersToFollow do
+      @followers = user.followers.all
+      @followersList.push @followers        
+    end
+    if @usersToFollow
+      build_suggestions(@usersToFollow, @followersList)
+      render json: { message: @finalList }, status: :ok
+    else
+      render json: { message: [] }, status: :ok
+    end
+  end
 
   # POST /users
   def create
@@ -47,7 +64,6 @@ class UsersController < ApplicationController
 
     if params[:id]
       mappedFriends = @followers.map {|friends| friends.friend_id}
-      puts(mappedFriends)
       if mappedFriends.include?(@current_user.id)
         @currentlyFollowing = true
       end
@@ -73,5 +89,21 @@ class UsersController < ApplicationController
     @user = JsonWebToken.decode({token: header})
     @current_user = User.find(@user[:user_id])
     details(@current_user)
+  end
+
+  def set_following
+    @following = Following.where(user_id: @current_user).pluck(:friend_id)
+  end
+
+  def build_suggestions(users, followers)
+    @finalList = Array.new
+    users.each_index {|index| 
+      new_user = {
+        username: users[index].username,
+        followers: followers[index],
+        photoURL: users[index].photoURL
+      }
+      @finalList.push(new_user)
+    }
   end
 end
