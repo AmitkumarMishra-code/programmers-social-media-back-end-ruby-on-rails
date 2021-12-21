@@ -15,12 +15,12 @@ class FollowingsController < ApplicationController
     if(@following)
       render json: {errors: {message: 'Already following user!'}}, status: :unprocessable_entity
     else
-      @newfollowing = @current_user.followings.build(:friend_id => @friend.id)
+      @new_following = @current_user.followings.build(:friend_id => @friend.id)
 
-      if @newfollowing.save
-        render json: {message: 'User Followed'}, status: :ok, location: @newfollowing
+      if @new_following.save
+        render json: {message: 'User Followed'}, status: :ok, location: @new_following
       else
-        render json: @newfollowing.errors, status: :unprocessable_entity
+        render json: @new_following.errors, status: :unprocessable_entity
       end
     end
   end

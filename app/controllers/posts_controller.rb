@@ -13,15 +13,15 @@ class PostsController < ApplicationController
 
   def feed
     @posts = Post.where(author: @following).order(created_at: :desc).limit(20)
-    @likesBySelf = Array.new
-    @finalPosts = Array.new
+    @likes_by_self = Array.new
+    @final_posts = Array.new
     for post in @posts do
       author = User.find_by_id(post.author_id)
       @likes = Like.find_by(post_id_id: post.id, user_id_id: @current_user.id)
-      @allLikes = Like.where(post_id_id: post)
+      @all_likes = Like.where(post_id_id: post)
       new_post = {
         post: post.post,
-        likes: @allLikes,
+        likes: @all_likes,
         createdAt: post.created_at,
         _id:post.id,
         author: {
@@ -34,16 +34,16 @@ class PostsController < ApplicationController
       if new_post[:likes].nil?
         new_post[:likes] = []
       end
-      
-      @finalPosts.push(new_post)
+
+      @final_posts.push(new_post)
       if @likes
-        @likesBySelf.push true
+        @likes_by_self.push true
       else
-        @likesBySelf.push false
+        @likes_by_self.push false
       end
     end
-    puts(@likesBySelf)
-    render json: { message: { posts: @finalPosts, likesMap: @likesBySelf } }, status: :ok
+    puts(@likes_by_self)
+    render json: { message: { posts: @final_posts, likesMap: @likes_by_self } }, status: :ok
   end
 
   # POST /posts

@@ -1,21 +1,21 @@
 class UsersController < ApplicationController
   before_action :authorize_request, except: :create
-  before_action :find_friend, only: [:friendprofile]
-  before_action :self_details, only: :selfprofile
-  before_action :set_user, only: [:selfprofile, :friendprofile, :index]
+  before_action :find_friend, only: [:friend_profile]
+  before_action :self_details, only: :self_profile
+  before_action :set_user, only: [:self_profile, :friend_profile, :index]
   before_action :set_following, only: :index
 
   def index
     @users = User.where.not(id: @current_user.id)
-    @usersToFollow = @users.reject {|friend| @following.include?(friend.id)}
-    @followersList = Array.new
-    for user in @usersToFollow do
+    @users_to_follow = @users.reject {|friend| @following.include?(friend.id)}
+    @followers_list = Array.new
+    for user in @users_to_follow do
       @followers = user.followers.all
-      @followersList.push @followers        
+      @followers_list.push @followers        
     end
-    if @usersToFollow
-      build_suggestions(@usersToFollow, @followersList)
-      render json: { message: @finalList }, status: :ok
+    if @users_to_follow
+      build_suggestions(@users_to_follow, @followers_list)
+      render json: { message: @final_list }, status: :ok
     else
       render json: { message: [] }, status: :ok
     end
@@ -23,20 +23,22 @@ class UsersController < ApplicationController
 
   # POST /users
   def create
-    @user = User.new(user_params)
+    image = Cloudinary::Uploader.upload(params[:profilePic])
+    photo_url = image["url"]
+    @user = User.new({photoURL: photo_url, name: params[:name], username: params[:username], email: params[:email], password: params[:password]})
     if @user.save
-      render json: @user, status: :created
+      render json: @user, status: :ok
     else
       render json: { errors: @user.errors.full_messages },
              status: :unprocessable_entity
     end
   end
 
-  def selfprofile
+  def self_profile
     render json: {message: @profile}, status: :ok
   end
 
-  def friendprofile
+  def friend_profile
     puts('friend profile')
     render json: {message: @profile}, status: :ok
   end
@@ -56,7 +58,7 @@ class UsersController < ApplicationController
 
   def user_params
     params.permit(
-      :photoURL, :name, :username, :email, :password
+      :profilePic, :name, :username, :email, :password
     )
   end
 
@@ -65,26 +67,26 @@ class UsersController < ApplicationController
     @following = Following.where(user_id: user.id)
     @posts = Post.where(author: user).order(created_at: :desc).limit(10)
     @likes = Like.where(user_id_id: user, post_id_id: @posts)
-    @currentlyFollowing = false
-    @isSelf = true
+    @currently_following = false
+    @is_self = true
 
     if params[:username]
       mappedFriends = @followers.map {|friends| friends.user_id}
       if mappedFriends.include?(@current_user.id)
-        @currentlyFollowing = true
+        @currently_following = true
       end
-      @isSelf = false
+      @is_self = false
     end
 
-    @likesBySelf = Array.new
-    @finalPosts = Array.new
+    @likes_by_self = Array.new
+    @final_posts = Array.new
     for post in @posts do
       author = User.find_by_id(post.author_id)
       @likes = Like.find_by(post_id_id: post.id, user_id_id: @current_user.id)
-      @allLikes = Like.find_by(post_id_id: post.id)
+      @all_likes = Like.find_by(post_id_id: post.id)
       new_post = {
         post: post.post,
-        likes: @allLikes,
+        likes: @all_likes,
         createdAt: post.created_at,
         _id:post.id,
         author: {
@@ -96,11 +98,11 @@ class UsersController < ApplicationController
       if new_post['likes'].nil?
         new_post['likes'] = []
       end
-      @finalPosts.push(new_post)
+      @final_posts.push(new_post)
       if @likes
-        @likesBySelf.push true
+        @likes_by_self.push true
       else
-        @likesBySelf.push false
+        @likes_by_self.push false
       end
     end
 
@@ -110,10 +112,10 @@ class UsersController < ApplicationController
       followers: @followers.length,
       photoURL: user.photoURL,
       name: user.name,
-      posts: @finalPosts,
-      likesMap: @likesBySelf,
-      self: @isSelf,
-      currentlyFollowing: @currentlyFollowing
+      posts: @final_posts,
+      likesMap: @likes_by_self,
+      self: @is_self,
+      currentlyFollowing: @currently_following
     }
   end
   
@@ -129,14 +131,14 @@ class UsersController < ApplicationController
   end
 
   def build_suggestions(users, followers)
-    @finalList = Array.new
+    @final_list = Array.new
     users.each_index {|index| 
       new_user = {
         username: users[index].username,
         followers: followers[index],
         photoURL: users[index].photoURL
       }
-      @finalList.push(new_user)
+      @final_list.push(new_user)
     }
   end
 end

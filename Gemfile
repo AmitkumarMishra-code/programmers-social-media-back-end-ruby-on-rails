@@ -29,6 +29,8 @@ gem 'rack-cors'
 # Use Json Web Token (JWT) for token based authentication
 gem 'jwt'
 
+gem 'cloudinary', require: true
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]

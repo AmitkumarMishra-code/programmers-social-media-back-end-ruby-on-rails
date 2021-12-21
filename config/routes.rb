@@ -7,8 +7,9 @@ Rails.application.routes.draw do
   post '/follow/:username', to: 'followings#create'
   post '/unfollow/:username', to: 'followings#destroy'
   resources :users, only: [:create, :index]
-  get '/profile/:username', to: 'users#friendprofile'
-  get '/profile', to: 'users#selfprofile'
+  post '/auth/signup', to: 'users#create'
+  get '/profile/:username', to: 'users#friend_profile'
+  get '/profile', to: 'users#self_profile'
   resources :likes, only: [:create, :destroy]
   post '/like/:id', to: 'likes#create'
   post '/unlike/:id', to: 'likes#destroy'
