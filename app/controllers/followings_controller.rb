@@ -1,39 +1,38 @@
 class FollowingsController < ApplicationController
   before_action :authorize_request
-  before_action :set_following, only: [:show]
+  before_action :set_following, only: [:destroy, :create]
   before_action :set_user
  
-  # GET /followings/1
-  def show
-    render json: {following: @following.length()}, status: :ok
-  end
-
   # POST /followings
   def create
     begin
+
     @friend = User.find_by(username: params[:username])
     rescue ActiveRecord::RecordNotFound => e
       render json: { errors: e.message }, status: :unauthorized
     end
-    @following = @current_user.followings.build(:friend_id => @friend.id)
 
-    if @following.save
-      render json: {message: 'User Followed'}, status: :ok, location: @following
+    if(@following)
+      render json: {errors: {message: 'Already following user!'}}, status: :unprocessable_entity
     else
-      render json: @following.errors, status: :unprocessable_entity
+      @newfollowing = @current_user.followings.build(:friend_id => @friend.id)
+
+      if @newfollowing.save
+        render json: {message: 'User Followed'}, status: :ok, location: @newfollowing
+      else
+        render json: @newfollowing.errors, status: :unprocessable_entity
+      end
     end
   end
 
   # DELETE /followings/1
   def destroy
-    begin
-      @friend = User.find_by(username: params[:username])
-      rescue ActiveRecord::RecordNotFound => e
-        render json: { errors: e.message }, status: :unauthorized
-      end
-    @following = @current_user.followings.find(@friend.id)
-    @following.destroy
-    render json: {message: 'User Unfollowed'}, status: :ok
+    if(@following)
+      @following.destroy
+      render json: {message: 'User Unfollowed'}, status: :ok
+    else
+      render json: { errors: {message:'You have to follow a user first to unfollow them!'} }, status: :unauthorized
+    end
   end
 
   def followers
@@ -44,7 +43,8 @@ class FollowingsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_following
-      @following = Following.where(user_id: @current_user.id)
+      @friend = User.find_by(username: params[:username])
+      @following = Following.find_by(user_id: @current_user, friend_id: @friend)
     end
 
     def set_user      

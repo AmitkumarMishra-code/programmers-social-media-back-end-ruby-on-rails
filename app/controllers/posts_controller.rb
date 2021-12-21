@@ -18,7 +18,7 @@ class PostsController < ApplicationController
     for post in @posts do
       author = User.find_by_id(post.author_id)
       @likes = Like.find_by(post_id_id: post.id, user_id_id: @current_user.id)
-      @allLikes = Like.find_by(post_id_id: post.id)
+      @allLikes = Like.where(post_id_id: post)
       new_post = {
         post: post.post,
         likes: @allLikes,
@@ -30,9 +30,11 @@ class PostsController < ApplicationController
           photoURL: author.photoURL
         }
       }
-      if new_post['likes'].nil?
-        new_post['likes'] = []
+
+      if new_post[:likes].nil?
+        new_post[:likes] = []
       end
+      
       @finalPosts.push(new_post)
       if @likes
         @likesBySelf.push true
@@ -40,7 +42,7 @@ class PostsController < ApplicationController
         @likesBySelf.push false
       end
     end
-    
+    puts(@likesBySelf)
     render json: { message: { posts: @finalPosts, likesMap: @likesBySelf } }, status: :ok
   end
 
